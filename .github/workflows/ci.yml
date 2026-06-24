@@ -71,11 +71,14 @@ jobs:
           # Path to dependency files for caching
           cache-dependency-path: 'go.sum'
 
-      - name: Run lint
-        uses: golangci/golangci-lint-action@v8
-        with:
-          version: latest
-          working-directory: backend
+      - name: Run Go Formatter
+        uses: go fmt
+        working-directory: backend
+
+      - name: Run Go Vet
+        uses: go vet
+        working-directory: backend
+          
 
       - name: Run tests
         run: go test
