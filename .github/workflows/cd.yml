@@ -1,0 +1,39 @@
+#Goal : To build the images from CI steps once the CI wokflow is succeeded
+
+name: CD
+
+on:
+  workflow_run:
+    workflows: ["CI"] # Must match the 'name' of the parent workflow exactly
+    types:
+      - completed
+    branches: ['advanced']
+
+jobs:
+  deploy-CI:
+    runs-on: self-hosted
+
+    steps:
+      - name: Code checkout
+        uses: actions/checkout@v7
+    
+      - name: Copy example Env to main Env
+        run: cp .env.example .env
+
+# Then start everything with one command (docker compose up --build) 
+# but make sure you have Docker and Docker compose installed on runner
+      - name: Login to Docker Hub
+        uses: docker/login-action@v4
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Deploy the containers with docker compose
+      # To run multi command in run use | operator
+        run:  |
+          docker compose pull
+          docker compose up -d
+
+
+
+    
