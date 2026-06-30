@@ -458,6 +458,16 @@ DOCKERHUB_TOKEN
     SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 ```
 
+Create a configuration file in the root directory of the project and name it `sonar-project.properties`: For details - https://github.com/marketplace/actions/official-sonarqube-scan
+```
+sonar.organization=<replace with your SonarQube Cloud organization key>
+sonar.projectKey=<replace with the key generated when setting up the project on SonarQube Cloud>
+
+# relative paths to source directories. More details and properties are described
+# at https://docs.sonarsource.com/sonarqube-cloud/advanced-setup/analysis-scope/
+sonar.sources=src
+```
+
 ---
 
 # Example EC2 Deployment Step
