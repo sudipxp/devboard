@@ -224,329 +224,54 @@ The browser calls these as `/api/...`; the backend serves them at the root.
 ├── backend/             Go API (main.go + Dockerfile)
 └── init/postgres/       schema + example data, loaded on first start
 ```
-# CI/CD DevSecOps Setup
-
-This repository contains GitHub Actions workflows configured for:
-
-* **CI/CD Automation**
-* **SonarQube (SAST) Security Scanning**
-* **OWASP ZAP (DAST) Security Testing**
-* **Docker Image Build & Push**
-* **AWS EC2 Deployment**
 
 ---
 
-# DevSecOps Pipeline Overview
+## CI/CD DevSecOps Setup
 
-```text
-Developer Pushes Code
-        │
-        ▼
-GitHub Actions CI
-        │
-        ├── Install Dependencies
-        ├── Run Linting
-        ├── Run Tests
-        ├── SonarQube Scan (SAST)
-        ├── Build Docker Image
-        └── Push Image to Docker Hub
-        │
-        ▼
-GitHub Actions CD
-        │
-        ├── Connect to AWS EC2
-        ├── Pull Latest Docker Image
-        ├── Docker Compose Deployment
-        └── Application Deployment
-        │
-        ▼
-OWASP ZAP Scan (DAST)
-        │
-        ▼
-Security Report
-```
+The repository contains GitHub Actions workflows configured with SonarQube (SAST) and OWASP ZAP (DAST) scanning.
 
----
+### How to Install and Set Up SonarQube on EC2
 
-# SonarQube Installation on AWS EC2
+To run your own self-hosted SonarQube server on your AWS EC2 instance:
 
-## 1. Start SonarQube Container
+1. **Start the SonarQube Container**:
+   Ensure Docker is installed on your EC2 instance, then run:
+   ```bash
+   docker run -itd --name SonarQube-Server -p 9000:9000 sonarqube:community
+   ```
 
-Ensure Docker is installed on your EC2 instance.
+2. **Access the Web Interface**:
+   - Make sure port `9000` is open in your **AWS EC2 Security Group** inbound rules.
+   - Access `http://<YOUR_EC2_PUBLIC_IP>:9000` in your browser.
+   - Log in using default credentials: Username: `admin` / Password: `admin` (you will be prompted to change it)
 
-```bash
-docker run -itd \
-  --name SonarQube-Server \
-  -p 9000:9000 \
-  sonarqube:community
-```
 
-Verify the container is running:
+### How to configure SonarQube Secrets
 
-```bash
-docker ps
-```
+To enable SonarQube scanning in your GitHub Actions pipeline:
 
----
+1. **Get the Host URL**:
+   - If using a self-hosted instance, your `SONAR_HOST_URL` is the URL where SonarQube is hosted (e.g., `http://your-sonarqube-ip:9000`).
+   - If using SonarCloud, use `https://sonarcloud.io`.
+2. **Generate a SonarQube Token**:
+   - In SonarQube: Go to your **Profile (User Icon) > My Account > Security**.
+   - Under **Generate Tokens**, enter a token name, select the **User Token** type, and click **Generate**.
+   - Copy the generated token string.
+3. **Add Secrets to GitHub**:
+   - Go to your GitHub Repository settings.
+   - Navigate to **Settings > Secrets and variables > Actions**.
+   - Add two Repository Secrets:
+     - `SONAR_TOKEN`: Paste the SonarQube token you copied.
+     - `SONAR_HOST_URL`: Paste your SonarQube server URL.
 
-## 2. Configure Security Group
+### How to configure Docker Hub Credentials
 
-Open the following inbound port in your EC2 Security Group:
+To allow the CI pipeline to build and push images to Docker Hub:
+1. Navigate to **Settings > Secrets and variables > Actions**.
+2. Under the **Variables** tab, add:
+   - `DOCKERHUB_USERNAME`: Your Docker Hub username.
+3. Under the **Secrets** tab, add:
+   - `DOCKERHUB_TOKEN`: A Personal Access Token (PAT) generated from Docker Hub.
 
-| Type       | Protocol | Port |
-| ---------- | -------- | ---- |
-| Custom TCP | TCP      | 9000 |
-
----
-
-## 3. Access SonarQube
-
-Open your browser:
-
-```text
-http://<YOUR_EC2_PUBLIC_IP>:9000
-```
-
-Default credentials:
-
-```text
-Username: admin
-Password: admin
-```
-
-You will be prompted to change the password after the first login.
-
----
-
-# Configure SonarQube Secrets
-
-## 1. Get SonarQube Host URL
-
-### Self-hosted SonarQube
-
-```text
-http://<YOUR_EC2_PUBLIC_IP>:9000
-```
-
-### SonarCloud
-
-```text
-https://sonarcloud.io
-```
-
----
-
-## 2. Generate SonarQube Token
-
-Navigate to:
-
-```text
-Profile → My Account → Security
-```
-
-Under **Generate Tokens**:
-
-1. Enter a token name
-2. Select **User Token**
-3. Click **Generate**
-4. Copy the generated token
-
----
-
-## 3. Add GitHub Secrets
-
-Navigate to:
-
-```text
-Repository Settings
-→ Secrets and Variables
-→ Actions
-```
-
-Add the following repository secrets:
-
-| Secret Name    | Description               |
-| -------------- | ------------------------- |
-| SONAR_TOKEN    | SonarQube generated token |
-| SONAR_HOST_URL | SonarQube server URL      |
-
----
-
-# Configure Docker Hub Credentials
-
-Navigate to:
-
-```text
-Repository Settings
-→ Secrets and Variables
-→ Actions
-```
-
-## Variables
-
-Add:
-
-| Variable Name      | Value               |
-| ------------------ | ------------------- |
-| DOCKERHUB_USERNAME | Docker Hub Username |
-
-## Secrets
-
-Add:
-
-| Secret Name     | Value                            |
-| --------------- | -------------------------------- |
-| DOCKERHUB_TOKEN | Docker Hub Personal Access Token |
-
----
-
-# Configure AWS EC2 Deployment Secrets
-
-Navigate to:
-
-```text
-Repository Settings
-→ Secrets and Variables
-→ Actions
-```
-
-Add the following secrets:
-
-| Secret Name    | Description                      |
-| -------------- | -------------------------------- |
-| EC2_HOST       | Public IP or DNS of EC2 instance |
-| EC2_USERNAME   | SSH username (ubuntu/ec2-user)   |
-| EC2_SSH_KEY    | Contents of .pem private key     |
-| EC2_TARGET_DIR | Deployment directory on EC2      |
-
-Example:
-
-```text
-EC2_HOST=54.210.xxx.xxx
-EC2_USERNAME=ubuntu
-EC2_TARGET_DIR=/home/ubuntu/devboard
-```
-
----
-
-# Docker Hub Personal Access Token
-
-Generate a Docker Hub token:
-
-```text
-Docker Hub
-→ Account Settings
-→ Personal Access Tokens
-→ Generate New Token
-```
-
-Copy the generated token and store it as:
-
-```text
-DOCKERHUB_TOKEN
-```
-
----
-
-# Example SonarQube GitHub Action
-
-```yaml
-- name: SonarQube Scan
-  uses: SonarSource/sonarqube-scan-action@v5
-  env:
-    SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-    SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-```
-
-Create a configuration file in the root directory of the project and name it `sonar-project.properties`: For details - https://github.com/marketplace/actions/official-sonarqube-scan
-```
-sonar.organization=<replace with your SonarQube Cloud organization key>
-sonar.projectKey=<replace with the key generated when setting up the project on SonarQube Cloud>
-
-# relative paths to source directories. More details and properties are described
-# at https://docs.sonarsource.com/sonarqube-cloud/advanced-setup/analysis-scope/
-sonar.sources=src
-```
-
----
-
-# Example EC2 Deployment Step
-
-```yaml
-- name: Deploy to EC2
-  uses: appleboy/ssh-action@v1
-  with:
-    host: ${{ secrets.EC2_HOST }}
-    username: ${{ secrets.EC2_USERNAME }}
-    key: ${{ secrets.EC2_SSH_KEY }}
-    script: |
-      cd ${{ secrets.EC2_TARGET_DIR }}
-      docker compose pull
-      docker compose up -d
-```
-
----
-
-# Required GitHub Secrets
-
-```text
-SONAR_TOKEN
-SONAR_HOST_URL
-DOCKERHUB_TOKEN
-EC2_HOST
-EC2_USERNAME
-EC2_SSH_KEY
-EC2_TARGET_DIR
-```
-
-# Required GitHub Variables
-
-```text
-DOCKERHUB_USERNAME
-```
-
----
-
-# Technologies Used
-
-* GitHub Actions
-* Docker
-* Docker Hub
-* AWS EC2
-* SonarQube (SAST)
-* OWASP ZAP (DAST)
-* Docker Compose
-* CI/CD
-* DevSecOps
-
----
-
-# Security Scanning
-
-### SAST (Static Application Security Testing)
-
-Performed using SonarQube.
-
-Detects:
-
-* Bugs
-* Code Smells
-* Vulnerabilities
-* Security Hotspots
-* Duplicate Code
-
-### DAST (Dynamic Application Security Testing)
-
-Performed using OWASP ZAP.
-
-Detects:
-
-* Cross-Site Scripting (XSS)
-* SQL Injection
-* Missing Security Headers
-* Authentication Issues
-* Runtime Vulnerabilities
-
-```
-```
 
