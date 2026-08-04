@@ -12,9 +12,21 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          persist-credentials: true
 
       - name: Sync upstream changes
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh repo sync ${{ github.repository }} --source LondheShubham153/devboard --branch main
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Add the upstream repository
+          git remote add upstream https://github.com/LondheShubham153/devboard.git
+          git fetch upstream
+          
+          # Merge changes into your master branch
+          git checkout master
+          git merge upstream/master --allow-unrelated-histories || true
+          
+          # Push the updated code back to your repository
+          git push origin master
