@@ -28,9 +28,9 @@ jobs:
           git checkout master
           git merge upstream/master -X theirs --allow-unrelated-histories -m "Sync upstream changes"
           
-          # CRITICAL: Remove any incoming workflow changes so GitHub doesn't block the push
-          git rm -r --cached .github/workflows/ || true
-          git checkout HEAD -- .github/workflows/ || true
+          # Completely wipe out any incoming workflows/github folders so GitHub doesn't block the app
+          rm -rf .github/
+          git add .
           git commit --amend --no-edit || true
           
           # Push the updated code back to your repository
