@@ -24,9 +24,9 @@ jobs:
           git remote add upstream https://github.com/LondheShubham153/devboard.git
           git fetch upstream
           
-          # Merge changes into your master branch
+          # Checkout master and merge, automatically resolving conflicts in favor of upstream ("theirs")
           git checkout master
-          git merge upstream/master --allow-unrelated-histories || true
+          git merge upstream/master -X theirs --allow-unrelated-histories -m "Sync upstream changes"
           
           # Push the updated code back to your repository
           git push origin master
