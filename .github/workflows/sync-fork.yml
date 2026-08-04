@@ -17,4 +17,4 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh repo sync ${{ github.repository }} --source LondheShubham153/devboard --branch master
+          gh repo sync ${{ github.repository }} --source LondheShubham153/devboard --branch main
